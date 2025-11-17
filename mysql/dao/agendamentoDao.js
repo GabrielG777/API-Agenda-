@@ -1,8 +1,8 @@
 const Agendamento = require('../model/agendamentoModel');
 const Usuario = require('../model/usuarioModel');
 const Empresa = require('../model/empresaModel');
-const Prestador = require('../model/prestadorModel'); // <-- Importante
-const Servico = require('../model/servicoModel'); // <-- Importante
+const Prestador = require('../model/prestadorModel');   
+const Servico = require('../model/servicoModel'); 
 const { Op } = require('sequelize');
 
 class AgendamentoDAO {
@@ -11,15 +11,14 @@ class AgendamentoDAO {
     return Agendamento.create(dados);
   }
 
-  // FUNÇÃO CORRIGIDA (Causa do erro)
   async findById(id) {
     return Agendamento.findByPk(id, {
       include: [
         { model: Empresa, as: 'empresa', attributes: ['id', 'nome'] },
         { 
-          model: Prestador, // O alias 'prestador' pertence ao Model 'Prestador'
+          model: Prestador, 
           as: 'prestador',
-          include: [ // E dentro dele, incluímos o usuário e o serviço
+          include: [ 
             { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] },
             { model: Servico, as: 'servico', attributes: ['id', 'nome', 'preco'] }
           ]
@@ -29,7 +28,6 @@ class AgendamentoDAO {
     });
   }
 
-  // Atualiza um agendamento
   async update(id, dados) {
     return Agendamento.update(dados, {
       where: { id: id }
@@ -42,9 +40,7 @@ class AgendamentoDAO {
     });
   }
 
-  // --- Funções de Consulta Específicas (Corrigidas) ---
 
-  // Busca agendamentos de um PRESTADOR (pelo ID do vínculo)
   async findAllByPrestador(id_prestador, dataInicio, dataFim) {
     return Agendamento.findAll({
       where: {
@@ -67,7 +63,6 @@ class AgendamentoDAO {
     });
   }
 
-  // Busca agendamentos de um CLIENTE
   async findAllByCliente(id_cliente) {
     return Agendamento.findAll({
       where: { id_cliente },
@@ -86,21 +81,19 @@ class AgendamentoDAO {
     });
   }
 
-  // --- Função de Validação (Já estava correta) ---
   async checkConflito(id_prestador, hora_inicio, hora_fim, agendamentoId = null) {
     
     const filtroConflito = {
       id_prestador,
-      status: { [Op.ne]: 'cancelado' }, // Ignora horários cancelados
+      status: { [Op.ne]: 'cancelado' }, 
       hora_inicio: {
-        [Op.lt]: hora_fim // Início do agendamento existente < Fim do novo
+        [Op.lt]: hora_fim 
       },
       hora_fim: {
-        [Op.gt]: hora_inicio // Fim do agendamento existente > Início do novo
+        [Op.gt]: hora_inicio 
       }
     };
 
-    // Se estivermos ATUALIZANDO, temos que excluir o próprio agendamento
     if (agendamentoId) {
       filtroConflito.id = { [Op.ne]: agendamentoId };
     }
@@ -109,7 +102,7 @@ class AgendamentoDAO {
       where: filtroConflito
     });
 
-    return conflito; // Retorna o agendamento conflitante se existir
+    return conflito; 
   }
 }
 
