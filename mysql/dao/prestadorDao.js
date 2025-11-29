@@ -41,7 +41,7 @@ class PrestadorDao {
       where: { id_usuario },
       include: [
         { model: Servico, as: 'servico' },
-        { model: Usuario, as: 'usuario', attributes: ['id', 'nome']}
+        { model: Usuario, as: 'usuario', attributes: ['id', 'nome'] }
       ]
     });
   }
@@ -56,6 +56,28 @@ class PrestadorDao {
       ]
     });
   }
+
+  // Busca todos os prestadores de uma empresa
+  async findAllByEmpresaId(id_empresa) {
+    return Prestador.findAll({
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['id', 'nome', 'id_empresa'],
+          where: { id_empresa } // FILTRO PRINCIPAL
+        },
+        {
+          model: Servico,
+          as: 'servico',
+          attributes: ['id', 'nome', 'id_empresa']
+        }
+      ]
+    });
+  }
+
 }
+
+
 
 module.exports = new PrestadorDao();

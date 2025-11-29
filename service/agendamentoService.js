@@ -1,3 +1,5 @@
+// Arquivo: .../service/agendamentoService.js (Assumimos que o caminho do DAO está correto)
+
 const agendamentoDAO = require('../mysql/dao/agendamentoDao');
 const usuarioDAO = require('../mysql/dao/usuarioDao');
 const prestadorDAO = require('../mysql/dao/prestadorDao');
@@ -9,7 +11,6 @@ class AgendamentoService {
     // CRIAR AGENDAMENTO
     async createAgendamento(dados) {
         try {
-            // O ID que vem aqui é o ID do VÍNCULO (da tabela 'prestador'), ex: 1
             const { id_prestador, id_cliente, hora_inicio, hora_fim } = dados;
 
             // REGRA 1: Validar o VÍNCULO (e encontrar o usuário prestador)
@@ -18,17 +19,16 @@ class AgendamentoService {
                 throw new Error('Vínculo Prestador-Serviço (id_prestador) não encontrado.');
             }
 
-            // Agora temos o ID do usuário real (ex: 2)
             const id_usuario_prestador = linkPrestador.id_usuario;
 
             // REGRA 2: Validar se os usuários existem (prestador e cliente)
-            const prestador = await usuarioDAO.findById(id_usuario_prestador); // Busca o usuário 2
+            const prestador = await usuarioDAO.findById(id_usuario_prestador);
             const cliente = await usuarioDAO.findById(id_cliente);
             if (!prestador || !cliente) {
                 throw new Error('Prestador ou Cliente não encontrado.');
             }
 
-            // REGRA 3: Validar o tipo dos usuários (AGORA VAI DAR CERTO)
+            // REGRA 3: Validar o tipo dos usuários
             if (prestador.flg_tipo !== 'P') {
                 throw new Error('Usuário vinculado não é do tipo "P".');
             }
@@ -42,7 +42,6 @@ class AgendamentoService {
             }
 
             // REGRA 5 (CRÍTICA): Validar conflito
-            // (Esta função já estava correta, pois ela checa pelo id_prestador do vínculo)
             const conflito = await agendamentoDAO.checkConflito(id_prestador, hora_inicio, hora_fim);
             if (conflito) {
                 throw new Error(`Conflito de horário. O prestador já possui um agendamento (ID: ${conflito.id}) às ${conflito.hora_inicio}.`);
@@ -50,6 +49,7 @@ class AgendamentoService {
 
             // Se passou em tudo, cria
             const novoAgendamento = await agendamentoDAO.create(dados);
+            // ESTA CHAMADA AGORA DEVE FUNCIONAR:
             return agendamentoDAO.findById(novoAgendamento.id); // Retorna com includes
 
         } catch (error) {
@@ -59,15 +59,18 @@ class AgendamentoService {
     }
 
     // BUSCAR POR ID
-    async getAgendamentoById(id) {
+    async getAgendamentosByUserId(idCliente) {
         try {
-            const agendamento = await agendamentoDAO.findById(id);
-            if (!agendamento) {
-                throw new Error('Agendamento não encontrado.');
+            const agendamentos = await agendamentoDAO.findByUserId(idCliente);
+
+            if (!agendamentos || agendamentos.length === 0) {
+                throw new Error("Nenhum agendamento encontrado para este usuário.");
             }
-            return agendamento;
+
+            return agendamentos;
+
         } catch (error) {
-            logError('Erro no AgendamentoService.getAgendamentoById', error);
+            logError("Erro no AgendamentoService.getAgendamentosByUserId", error);
             throw new Error(error.message);
         }
     }
@@ -75,7 +78,6 @@ class AgendamentoService {
     // LISTAR AGENDAMENTOS DE UM PRESTADOR
     async getAgendamentosPorPrestador(id_prestador, dataInicio, dataFim) {
         try {
-            // TODO: Validar formato das datas
             return await agendamentoDAO.findAllByPrestador(id_prestador, dataInicio, dataFim);
         } catch (error) {
             logError('Erro no AgendamentoService.getAgendamentosPorPrestador', error);
@@ -105,7 +107,7 @@ class AgendamentoService {
             if (dados.hora_inicio || dados.hora_fim) {
                 const hInicio = dados.hora_inicio || agendamento.hora_inicio;
                 const hFim = dados.hora_fim || agendamento.hora_fim;
-                const id_prestador = agendamento.id_prestador; // Pega o prestador do agendamento original
+                const id_prestador = agendamento.id_prestador;
 
                 const conflito = await agendamentoDAO.checkConflito(id_prestador, hInicio, hFim, id);
                 if (conflito) {
@@ -113,7 +115,6 @@ class AgendamentoService {
                 }
             }
 
-            // Atualiza apenas os campos enviados
             await agendamentoDAO.update(id, dados);
             return agendamentoDAO.findById(id); // Retorna atualizado
 
@@ -123,15 +124,14 @@ class AgendamentoService {
         }
     }
 
-    // MUDAR O STATUS (Ex: 'cancelado' ou 'concluido')
+    // MUDAR O STATUS
     async updateStatus(id, status) {
         try {
             const agendamento = await agendamentoDAO.findById(id);
             if (!agendamento) {
                 throw new Error('Agendamento não encontrado.');
             }
-            // TODO: Validar se o status é um dos permitidos
-
+            
             await agendamentoDAO.update(id, { status: status });
             return agendamentoDAO.findById(id);
 
@@ -141,7 +141,7 @@ class AgendamentoService {
         }
     }
 
-    // DELETAR (Não recomendado, o ideal é cancelar)
+    // DELETAR
     async deleteAgendamento(id) {
         try {
             const agendamento = await agendamentoDAO.findById(id);

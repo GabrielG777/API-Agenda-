@@ -10,5 +10,7 @@ router.put('/:id', prestadorController.atualizarLink);
 // Rotas de consulta
 router.get('/usuario/:id_usuario', prestadorController.listarServicosDoPrestador);
 router.get('/servico/:id_servico', prestadorController.listarPrestadoresDoServico);
+router.get('/empresa/:id_empresa', prestadorController.getPrestadoresDaEmpresa);
+
 
 module.exports = router;

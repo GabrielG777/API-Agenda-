@@ -31,7 +31,7 @@ class PrestadorService {
       if (usuario.id_empresa !== id_empresa || servico.id_empresa !== id_empresa) {
         throw new Error('Usuário e Serviço não pertencem à empresa informada.');
       }
-      
+
       // REGRA 5: O link não pode existir
       const linkExiste = await prestadorDAO.findLink(id_usuario, id_servico);
       if (linkExiste) {
@@ -60,10 +60,10 @@ class PrestadorService {
       throw new Error(error.message);
     }
   }
-  
+
   // ATUALIZAR (ex: mudar descrição do link)
   async updateLink(id_link, dados) {
-     try {
+    try {
       const link = await prestadorDAO.findById(id_link);
       if (!link) {
         throw new Error('Vínculo não encontrado.');
@@ -95,6 +95,16 @@ class PrestadorService {
       throw new Error('Erro ao buscar prestadores do serviço.');
     }
   }
+
+  async getPrestadoresDaEmpresa(id_empresa) {
+    try {
+      return await prestadorDAO.findAllByEmpresaId(id_empresa);
+    } catch (error) {
+      logError('Erro no PrestadorService.getPrestadoresDaEmpresa', error);
+      throw new Error('Erro ao buscar prestadores da empresa.');
+    }
+  }
+
 }
 
 module.exports = new PrestadorService();

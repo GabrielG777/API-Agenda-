@@ -1,12 +1,14 @@
+// Arquivo: .../routes/agendamentoRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const agendamentoController = require('../controller/agendamentoController');
 
 // "CRUD"
 router.post('/', agendamentoController.criar);
-router.get('/:id', agendamentoController.buscarPorId);
+router.get('/:idUsuario', agendamentoController.buscarPorUsuario);
 router.put('/:id', agendamentoController.atualizar);
-router.delete('/:id', agendamentoController.deletar); // Não recomendado
+router.delete('/:id', agendamentoController.deletar);
 
 // Rotas de consulta
 router.get('/prestador/:id_prestador', agendamentoController.listarPorPrestador);

@@ -54,10 +54,24 @@ async function listarPrestadoresDoServico(req, res) {
   }
 }
 
+async function getPrestadoresDaEmpresa(req, res) {
+  try {
+    const { id_empresa } = req.params;
+
+    const resultado = await prestadorService.getPrestadoresDaEmpresa(id_empresa);
+
+    res.status(200).json(resultado);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+
 module.exports = {
   linkar,
   deslinkar,
   atualizarLink,
   listarServicosDoPrestador,
-  listarPrestadoresDoServico
+  listarPrestadoresDoServico,
+  getPrestadoresDaEmpresa
 };
